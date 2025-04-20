@@ -85,6 +85,14 @@ function copyToClipboard(text) {
         });
 }
 
+function handleGlobalErrors() {
+  window.onerror = (msg, url, line) => {
+    console.error(`Error: ${msg} at ${url}:${line}`);
+    alert("An unexpected error occurred. Please refresh the page.");
+    return true;
+  };
+}
+
 /**
  * Format a timestamp to a readable date string
  * @param {Timestamp} timestamp - Firebase timestamp
