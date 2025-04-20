@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>mates - maps of your dates</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Auth Container (shown when not logged in) -->
+        <div id="auth-container" class="auth-container">
+            <div class="auth-box">
+                <div class="logo">mates</div>
+                <div class="tagline">maps of your dates</div>
+                
+                <div id="login-form" class="auth-form">
+                    <h2>Login</h2>
+                    <div class="input-group">
+                        <input type="email" id="login-email" placeholder="Email" required>
+                    </div>
+                    <div class="input-group">
+                        <input type="password" id="login-password" placeholder="Password" required>
+                    </div>
+                    <button id="login-button" class="auth-button">Login</button>
+                    <p class="switch-form">Don't have an account? <a href="#" id="show-signup">Sign up</a></p>
+                    <div id="login-error" class="error-message"></div>
+                </div>
+
+                <div id="signup-form" class="auth-form hidden">
+                    <h2>Create Account</h2>
+                    <div class="input-group">
+                        <input type="text" id="signup-name" placeholder="Your Name" required>
+                    </div>
+                    <div class="input-group">
+                        <input type="email" id="signup-email" placeholder="Email" required>
+                    </div>
+                    <div class="input-group">
+                        <input type="password" id="signup-password" placeholder="Password" required>
+                    </div>
+                    <button id="signup-button" class="auth-button">Sign Up</button>
+                    <p class="switch-form">Already have an account? <a href="#" id="show-login">Login</a></p>
+                    <div id="signup-error" class="error-message"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Connection Container (shown when logged in but not connected) -->
+        <div id="connection-container" class="connection-container hidden">
+            <div class="connection-box">
+                <div class="logo">mates</div>
+                <div class="tagline">maps of your dates</div>
+                
+                <div class="connection-section">
+                    <h2>Connect with your mate</h2>
+                    <p>Share your connection code or enter your mate's code below:</p>
+                    
+                    <div class="connection-code-section">
+                        <div class="input-group">
+                            <label>Your Connection Code</label>
+                            <input type="text" id="my-connection-code" readonly>
+                            <button id="copy-code" class="small-button">Copy</button>
+                        </div>
+                    </div>
+                    
+                    <div class="mate-code-section">
+                        <div class="input-group">
+                            <label>Enter Your Mate's Code</label>
+                            <input type="text" id="mate-connection-code" placeholder="Paste code here">
+                            <button id="connect-button" class="connect-button">Connect</button>
+                        </div>
+                    </div>
+                    <div id="connection-error" class="error-message"></div>
+                </div>
+                <button id="logout-from-connection" class="text-button">Logout</button>
+            </div>
+        </div>
+
+        <!-- Main App Container (shown when logged in and connected) -->
+        <div id="main-container" class="main-container hidden">
+            <div class="sidebar">
+                <div class="sidebar-header">
+                    <div class="logo-small">mates</div>
+                    <div class="user-info">
+                        <span id="user-name">User Name</span>
+                        <span id="connection-status">Connected with <span id="mate-name">Mate</span></span>
+                    </div>
+                </div>
+                
+                <div class="sidebar-content">
+                    <div class="place-details hidden" id="place-details">
+                        <h2 id="place-name">Place Name</h2>
+                        <div class="place-actions">
+                            <button id="bookmark-place" class="icon-button">
+                                <span class="bookmark-icon">☆</span>
+                            </button>
+                        </div>
+                        
+                        <div class="place-description">
+                            <textarea id="place-description" placeholder="Add a description about this place..."></textarea>
+                            <button id="save-description" class="small-button">Save</button>
+                        </div>
+                        
+                        <div class="place-images">
+                            <h3>Images</h3>
+                            <div id="images-container" class="images-container"></div>
+                            <div class="image-upload">
+                                <label for="image-upload-input" class="upload-button">Add Image</label>
+                                <input type="file" id="image-upload-input" accept="image/*" style="display: none;">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="no-place-selected" id="no-place-selected">
+                        <p>Click on a pin to view details or click on the map to add a new place.</p>
+                    </div>
+                </div>
+                
+                <div class="sidebar-footer">
+                    <button id="logout-button" class="text-button">Logout</button>
+                </div>
+            </div>
+            
+            <div class="map-container">
+                <div id="map"></div>
+                <div class="map-overlay hidden" id="add-place-overlay">
+                    <div class="overlay-content">
+                        <h3>Add New Place</h3>
+                        <div class="input-group">
+                            <input type="text" id="new-place-name" placeholder="Place name">
+                        </div>
+                        <div class="button-group">
+                            <button id="confirm-add-place" class="small-button">Add</button>
+                            <button id="cancel-add-place" class="small-button secondary">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay hidden">
+        <div class="loader"></div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-analytics.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+        import { getFirestore, collection, doc, addDoc, getDoc, getDocs, setDoc, updateDoc, onSnapshot, query, where, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-storage.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCeX6Qx5D418brqSvnDsTKZxPpIjFGX5G8",
+            authDomain: "mates-df5c5.firebaseapp.com",
+            projectId: "mates-df5c5",
+            storageBucket: "mates-df5c5.firebasestorage.app",
+            messagingSenderId: "622990964278",
+            appId: "1:622990964278:web:459cf848668fce7218ca97",
+            measurementId: "G-QQ0DT2D41V"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+
+        // Make Firebase services available globally
+        window.firebaseServices = {
+            app,
+            auth,
+            db,
+            storage,
+            firebaseModules: {
+                createUserWithEmailAndPassword,
+                signInWithEmailAndPassword,
+                onAuthStateChanged,
+                signOut,
+                collection,
+                doc,
+                addDoc,
+                getDoc,
+                getDocs,
+                setDoc,
+                updateDoc,
+                onSnapshot,
+                query,
+                where,
+                deleteDoc,
+                ref,
+                uploadBytes,
+                getDownloadURL
+            }
+        };
+
+        // Initialize the app when Firebase is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            // Call the init function from the main.js file
+            if (typeof initApp === 'function') {
+                initApp();
+            }
+        });
+    </script>
+
+    <!-- App Scripts -->
+    <script src="utils.js"></script>
+    <script src="auth.js"></script>
+    <script src="map.js"></script>
+    <script src="places.js"></script>
+    <script src="connection.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
